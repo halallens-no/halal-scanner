@@ -1,0 +1,19 @@
+node_modules/
+dist/
+*.tgz
+.DS_Store
+
+# Secrets - prevent accidental commits
+.env
+.env.*
+*.key
+*.pem
+*.p12
+
+# IDE
+.vscode/
+.idea/
+
+# Build artifacts
+coverage/
+*.log

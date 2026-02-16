@@ -1,0 +1,59 @@
+{
+  "name": "@halallens/halal-scanner",
+  "version": "1.0.0",
+  "description": "Free halal food scanner - check ingredients instantly. Powered by HalalLens AI.",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "halal",
+    "halal-scanner",
+    "food-scanner",
+    "ingredient-checker",
+    "halal-food",
+    "halal-checker",
+    "free",
+    "open-source",
+    "e-numbers",
+    "food-ingredients",
+    "halal-status",
+    "muslim",
+    "islamic",
+    "food-safety"
+  ],
+  "author": "HalalLens <mac@halallens.no> (https://halallens.no)",
+  "license": "MIT",
+  "homepage": "https://halallens.no",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/halallens-no/halal-scanner.git"
+  },
+  "bugs": {
+    "url": "https://github.com/halallens-no/halal-scanner/issues"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
+  }
+}

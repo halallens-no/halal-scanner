@@ -1,0 +1,1311 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Free Halal Scanner — Check Any Ingredient Instantly | HalalLens</title>
+  <meta name="description" content="Free halal food scanner. Check if any ingredient is halal, haram, or mushbooh instantly. Powered by HalalLens AI with database of 10,000+ ingredients.">
+  <meta name="keywords" content="halal scanner, free halal scanner, halal food checker, ingredient checker, halal app, e-numbers halal, halal haram checker">
+  <meta property="og:title" content="Free Halal Scanner — Check Any Ingredient Instantly">
+  <meta property="og:description" content="Check if any food ingredient is halal, haram, or mushbooh. Free, instant, powered by AI.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://halallens-no.github.io/halal-scanner/">
+  <link rel="canonical" href="https://halallens-no.github.io/halal-scanner/">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --green: #00A878;
+      --green-light: #34D89A;
+      --green-deep: #007A5A;
+      --gold: #D4AF5C;
+      --gold-light: #E8CC85;
+      --gold-dark: #A8893A;
+      --bg: #FAFCFB;
+      --bg-warm: #F5F8F7;
+      --glass-surface: rgba(255, 255, 255, 0.72);
+      --glass-surface-heavy: rgba(255, 255, 255, 0.88);
+      --glass-border: rgba(0, 168, 120, 0.12);
+      --glass-border-gold: rgba(212, 175, 92, 0.18);
+      --glass-blur: blur(20px);
+      --radius-card: 20px;
+      --radius-pill: 28px;
+      --radius-sm: 12px;
+      --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.06);
+      --shadow-elevated: 0 8px 32px rgba(0, 0, 0, 0.08);
+      --shadow-glow: 0 4px 20px rgba(0, 168, 120, 0.12);
+      --halal: #00A878;
+      --haram: #DC3545;
+      --mushbooh: #E5920A;
+      --unknown: #6B7280;
+      --text-primary: #111827;
+      --text-secondary: #4B5563;
+      --text-muted: #9CA3AF;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Outfit', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* === GEOMETRIC BACKGROUND === */
+    .geo-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .geo-shape {
+      position: absolute;
+      opacity: 0;
+      animation: geoFadeIn 1.8s ease-out forwards;
+    }
+
+    .geo-shape--1 {
+      top: 8%;
+      right: 12%;
+      width: 220px;
+      height: 220px;
+      border: 1.5px solid rgba(0, 168, 120, 0.08);
+      border-radius: 50%;
+      animation-delay: 0.2s;
+    }
+
+    .geo-shape--2 {
+      top: 35%;
+      left: -40px;
+      width: 180px;
+      height: 180px;
+      background: radial-gradient(circle, rgba(212, 175, 92, 0.06) 0%, transparent 70%);
+      border-radius: 50%;
+      animation-delay: 0.5s;
+    }
+
+    .geo-shape--3 {
+      bottom: 20%;
+      right: -20px;
+      width: 300px;
+      height: 300px;
+      border: 1px solid rgba(0, 168, 120, 0.05);
+      transform: rotate(45deg);
+      animation-delay: 0.8s;
+    }
+
+    .geo-shape--4 {
+      top: 60%;
+      left: 20%;
+      width: 140px;
+      height: 140px;
+      background: radial-gradient(circle, rgba(0, 168, 120, 0.04) 0%, transparent 60%);
+      border-radius: 50%;
+      animation-delay: 1s;
+    }
+
+    .geo-shape--5 {
+      top: 15%;
+      left: 8%;
+      width: 80px;
+      height: 80px;
+      border: 1px solid rgba(212, 175, 92, 0.1);
+      transform: rotate(30deg);
+      animation-delay: 0.6s;
+    }
+
+    .geo-pattern {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image:
+        radial-gradient(circle at 25% 25%, rgba(0, 168, 120, 0.015) 0%, transparent 50%),
+        radial-gradient(circle at 75% 75%, rgba(212, 175, 92, 0.015) 0%, transparent 50%),
+        radial-gradient(circle at 50% 10%, rgba(0, 168, 120, 0.02) 0%, transparent 40%);
+    }
+
+    @keyframes geoFadeIn {
+      from { opacity: 0; transform: translateY(20px) scale(0.95); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* === LAYOUT === */
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0 20px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* === HEADER === */
+    .header {
+      padding: 20px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      animation: slideDown 0.8s ease-out;
+    }
+
+    .header__brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text-primary);
+    }
+
+    .header__logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--green-light), var(--green), var(--green-deep));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 700;
+      font-size: 16px;
+      box-shadow: var(--shadow-glow);
+    }
+
+    .header__name {
+      font-weight: 600;
+      font-size: 15px;
+      letter-spacing: -0.01em;
+    }
+
+    .header__badge {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--green);
+      background: rgba(0, 168, 120, 0.08);
+      padding: 4px 12px;
+      border-radius: 20px;
+      border: 0.5px solid var(--glass-border);
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* === HERO === */
+    .hero {
+      padding: 48px 0 40px;
+      text-align: center;
+      animation: heroReveal 1s ease-out 0.2s both;
+    }
+
+    .hero__eyebrow {
+      font-family: 'Outfit', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold-dark);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .hero__eyebrow::before,
+    .hero__eyebrow::after {
+      content: '';
+      width: 24px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    }
+
+    .hero__title {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: clamp(36px, 8vw, 56px);
+      font-weight: 600;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, var(--green-deep) 0%, var(--green) 40%, var(--green-light) 70%, var(--gold) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 16px;
+    }
+
+    .hero__subtitle {
+      font-size: 17px;
+      font-weight: 300;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      max-width: 460px;
+      margin: 0 auto 36px;
+    }
+
+    .hero__subtitle strong {
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    @keyframes heroReveal {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* === SEARCH === */
+    .search {
+      animation: heroReveal 1s ease-out 0.4s both;
+    }
+
+    .search__card {
+      background: var(--glass-surface-heavy);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border: 0.5px solid var(--glass-border);
+      border-radius: var(--radius-card);
+      padding: 6px;
+      box-shadow: var(--shadow-elevated);
+      transition: box-shadow 0.4s ease, border-color 0.4s ease;
+    }
+
+    .search__card:focus-within {
+      box-shadow: var(--shadow-elevated), 0 0 0 3px rgba(0, 168, 120, 0.1);
+      border-color: rgba(0, 168, 120, 0.25);
+    }
+
+    .search__inner {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 16px;
+    }
+
+    .search__icon {
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+      color: var(--text-muted);
+      transition: color 0.3s;
+    }
+
+    .search__card:focus-within .search__icon {
+      color: var(--green);
+    }
+
+    .search__input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      font-family: 'Outfit', sans-serif;
+      font-size: 17px;
+      font-weight: 400;
+      color: var(--text-primary);
+      outline: none;
+      padding: 8px 0;
+    }
+
+    .search__input::placeholder {
+      color: var(--text-muted);
+      font-weight: 300;
+    }
+
+    .search__btn {
+      flex-shrink: 0;
+      background: linear-gradient(135deg, var(--green), var(--green-deep));
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-pill);
+      padding: 10px 24px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.3s;
+      box-shadow: 0 2px 12px rgba(0, 168, 120, 0.25);
+    }
+
+    .search__btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 20px rgba(0, 168, 120, 0.35);
+    }
+
+    .search__btn:active { transform: translateY(0); }
+
+    .search__hint {
+      text-align: center;
+      margin-top: 14px;
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 300;
+    }
+
+    .search__hint span {
+      display: inline-block;
+      background: rgba(0, 168, 120, 0.06);
+      border: 0.5px solid var(--glass-border);
+      padding: 2px 10px;
+      border-radius: 12px;
+      margin: 2px;
+      font-weight: 400;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+      color: var(--text-secondary);
+    }
+
+    .search__hint span:hover {
+      background: rgba(0, 168, 120, 0.12);
+      color: var(--green-deep);
+    }
+
+    /* === RESULTS === */
+    .results {
+      padding: 32px 0;
+      min-height: 120px;
+    }
+
+    .results__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      opacity: 0;
+      animation: fadeUp 0.5s ease-out forwards;
+    }
+
+    .results__count {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    .results__grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* === INGREDIENT CARD === */
+    .card {
+      background: var(--glass-surface);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border: 0.5px solid var(--glass-border);
+      border-radius: var(--radius-card);
+      padding: 20px 24px;
+      box-shadow: var(--shadow-soft);
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      cursor: pointer;
+      transition: transform 0.25s ease, box-shadow 0.35s ease, border-color 0.35s ease;
+      opacity: 0;
+      animation: cardIn 0.5s ease-out forwards;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-elevated);
+      border-color: rgba(0, 168, 120, 0.2);
+    }
+
+    .card__status-ring {
+      flex-shrink: 0;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      position: relative;
+    }
+
+    .card__status-ring::after {
+      content: '';
+      position: absolute;
+      inset: -3px;
+      border-radius: 50%;
+      border: 1.5px solid currentColor;
+      opacity: 0.2;
+    }
+
+    .card__status-ring--halal { color: var(--halal); background: rgba(0, 168, 120, 0.08); }
+    .card__status-ring--haram { color: var(--haram); background: rgba(220, 53, 69, 0.08); }
+    .card__status-ring--mushbooh { color: var(--mushbooh); background: rgba(229, 146, 10, 0.08); }
+    .card__status-ring--unknown { color: var(--unknown); background: rgba(107, 114, 128, 0.08); }
+    .card__status-ring--not_food { color: var(--unknown); background: rgba(107, 114, 128, 0.08); }
+
+    .card__body { flex: 1; min-width: 0; }
+
+    .card__name {
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      margin-bottom: 4px;
+      text-transform: capitalize;
+    }
+
+    .card__meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .card__badge {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 8px;
+    }
+
+    .card__badge--halal { color: var(--halal); background: rgba(0, 168, 120, 0.1); }
+    .card__badge--haram { color: var(--haram); background: rgba(220, 53, 69, 0.1); }
+    .card__badge--mushbooh { color: var(--mushbooh); background: rgba(229, 146, 10, 0.1); }
+    .card__badge--unknown { color: var(--unknown); background: rgba(107, 114, 128, 0.1); }
+    .card__badge--not_food { color: var(--unknown); background: rgba(107, 114, 128, 0.1); }
+
+    .card__category {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    .card__explanation {
+      margin-top: 8px;
+      font-size: 13.5px;
+      line-height: 1.55;
+      color: var(--text-secondary);
+      font-weight: 300;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .card__verified {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 11px;
+      color: var(--green);
+      font-weight: 500;
+    }
+
+    .card__arrow {
+      flex-shrink: 0;
+      align-self: center;
+      opacity: 0;
+      transform: translateX(-4px);
+      transition: opacity 0.25s, transform 0.25s;
+      color: var(--text-muted);
+    }
+
+    .card:hover .card__arrow {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* === STATS BAR === */
+    .stats {
+      display: none;
+      gap: 8px;
+      margin-bottom: 20px;
+      animation: fadeUp 0.5s ease-out;
+    }
+
+    .stats.visible { display: flex; }
+
+    .stats__pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--glass-surface);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border: 0.5px solid var(--glass-border);
+      border-radius: 14px;
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .stats__dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+    }
+
+    .stats__dot--halal { background: var(--halal); }
+    .stats__dot--haram { background: var(--haram); }
+    .stats__dot--mushbooh { background: var(--mushbooh); }
+    .stats__dot--unknown { background: var(--unknown); }
+
+    /* === LOADING === */
+    .loading {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 0;
+      gap: 16px;
+    }
+
+    .loading.visible { display: flex; }
+
+    .loading__spinner {
+      width: 32px;
+      height: 32px;
+      border: 2.5px solid rgba(0, 168, 120, 0.15);
+      border-top-color: var(--green);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    .loading__text {
+      font-size: 14px;
+      color: var(--text-muted);
+      font-weight: 300;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* === EMPTY / ERROR STATE === */
+    .empty-state {
+      text-align: center;
+      padding: 48px 20px;
+      display: none;
+    }
+
+    .empty-state.visible { display: block; }
+
+    .empty-state__icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.6;
+    }
+
+    .empty-state__title {
+      font-size: 17px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .empty-state__text {
+      font-size: 14px;
+      color: var(--text-muted);
+      font-weight: 300;
+    }
+
+    /* === FUZZY SUGGESTIONS === */
+    .suggestions {
+      display: none;
+      margin-bottom: 16px;
+      animation: fadeUp 0.4s ease-out;
+    }
+
+    .suggestions.visible { display: block; }
+
+    .suggestions__title {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 400;
+      margin-bottom: 8px;
+    }
+
+    .suggestions__list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .suggestions__chip {
+      font-size: 13px;
+      font-weight: 400;
+      font-family: 'Outfit', sans-serif;
+      padding: 5px 14px;
+      border-radius: 14px;
+      background: var(--glass-surface);
+      border: 0.5px solid var(--glass-border);
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+      color: var(--text-secondary);
+    }
+
+    .suggestions__chip:hover {
+      background: rgba(0, 168, 120, 0.08);
+      border-color: rgba(0, 168, 120, 0.2);
+      color: var(--green-deep);
+    }
+
+    /* === CTA === */
+    .cta {
+      margin: 16px 0 48px;
+      animation: heroReveal 1s ease-out 0.6s both;
+    }
+
+    .cta__card {
+      background: linear-gradient(135deg, rgba(0, 168, 120, 0.06) 0%, rgba(212, 175, 92, 0.04) 100%);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border: 0.5px solid var(--glass-border-gold);
+      border-radius: var(--radius-card);
+      padding: 32px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta__card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    }
+
+    .cta__icon {
+      font-size: 32px;
+      margin-bottom: 12px;
+    }
+
+    .cta__title {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text-primary);
+    }
+
+    .cta__text {
+      font-size: 14px;
+      color: var(--text-secondary);
+      font-weight: 300;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .cta__link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, var(--green), var(--green-deep));
+      color: #fff;
+      text-decoration: none;
+      padding: 12px 28px;
+      border-radius: var(--radius-pill);
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      transition: transform 0.2s, box-shadow 0.3s;
+      box-shadow: 0 4px 16px rgba(0, 168, 120, 0.25);
+    }
+
+    .cta__link:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(0, 168, 120, 0.35);
+    }
+
+    /* === NPM SECTION === */
+    .npm-section {
+      margin-bottom: 48px;
+      animation: heroReveal 1s ease-out 0.8s both;
+    }
+
+    .npm__card {
+      background: var(--glass-surface);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border: 0.5px solid var(--glass-border);
+      border-radius: var(--radius-card);
+      padding: 28px;
+    }
+
+    .npm__label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold-dark);
+      margin-bottom: 12px;
+    }
+
+    .npm__code {
+      background: #1a1f2e;
+      border-radius: var(--radius-sm);
+      padding: 16px 20px;
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: 13.5px;
+      color: #e2e8f0;
+      overflow-x: auto;
+      line-height: 1.7;
+      margin-bottom: 16px;
+      white-space: pre;
+    }
+
+    .npm__code .kw { color: #c792ea; }
+    .npm__code .fn { color: #82aaff; }
+    .npm__code .str { color: #c3e88d; }
+    .npm__code .cm { color: #546e7a; }
+    .npm__code .op { color: #89ddff; }
+
+    .npm__text {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 300;
+      line-height: 1.5;
+    }
+
+    .npm__text a {
+      color: var(--green);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .npm__text a:hover { text-decoration: underline; }
+
+    /* === FOOTER === */
+    .footer {
+      padding: 32px 0;
+      border-top: 0.5px solid rgba(0, 168, 120, 0.08);
+      text-align: center;
+    }
+
+    .footer__powered {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 300;
+    }
+
+    .footer__powered a {
+      color: var(--green);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .footer__powered a:hover { text-decoration: underline; }
+
+    .footer__links {
+      margin-top: 12px;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    .footer__link {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-weight: 400;
+      transition: color 0.2s;
+    }
+
+    .footer__link:hover { color: var(--green); }
+
+    /* === RESPONSIVE === */
+    @media (max-width: 640px) {
+      .container { padding: 0 16px; }
+      .hero { padding: 32px 0 28px; }
+      .hero__title { font-size: 32px; }
+      .hero__subtitle { font-size: 15px; }
+      .search__inner { padding: 4px 12px; }
+      .search__btn { padding: 10px 18px; font-size: 13px; }
+      .card { padding: 16px; gap: 12px; }
+      .card__status-ring { width: 38px; height: 38px; font-size: 16px; }
+      .card__name { font-size: 15px; }
+      .cta__card { padding: 24px 20px; }
+      .npm__card { padding: 20px; }
+      .npm__code { font-size: 12px; padding: 12px 14px; }
+      .stats { flex-wrap: wrap; }
+      .geo-shape--1 { width: 140px; height: 140px; }
+      .geo-shape--3 { width: 180px; height: 180px; }
+    }
+
+    @media print {
+      .geo-canvas, .search, .cta, .npm-section, .footer__links { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Geometric background -->
+  <div class="geo-canvas" id="geoCanvas">
+    <div class="geo-pattern"></div>
+    <div class="geo-shape geo-shape--1"></div>
+    <div class="geo-shape geo-shape--2"></div>
+    <div class="geo-shape geo-shape--3"></div>
+    <div class="geo-shape geo-shape--4"></div>
+    <div class="geo-shape geo-shape--5"></div>
+  </div>
+
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <a href="https://halallens.no" class="header__brand" target="_blank" rel="noopener">
+        <div class="header__logo">H</div>
+        <span class="header__name">HalalLens</span>
+      </a>
+      <span class="header__badge">Open Source</span>
+    </header>
+
+    <!-- Hero -->
+    <section class="hero">
+      <p class="hero__eyebrow">Powered by AI</p>
+      <h1 class="hero__title">Free Halal<br>Scanner</h1>
+      <p class="hero__subtitle">
+        Check if any food ingredient is <strong>halal</strong>, <strong>haram</strong>, or <strong>mushbooh</strong> — instantly, for free.
+      </p>
+    </section>
+
+    <!-- Search -->
+    <section class="search">
+      <div class="search__card">
+        <div class="search__inner">
+          <svg class="search__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+          </svg>
+          <input
+            id="searchInput"
+            class="search__input"
+            type="text"
+            placeholder="Type an ingredient name..."
+            autocomplete="off"
+            spellcheck="false"
+          >
+          <button id="searchBtn" class="search__btn">Check</button>
+        </div>
+      </div>
+      <p class="search__hint" id="searchHint"></p>
+    </section>
+
+    <!-- Results -->
+    <section class="results" id="results">
+      <div class="loading" id="loading">
+        <div class="loading__spinner"></div>
+        <span class="loading__text">Checking ingredients...</span>
+      </div>
+
+      <div class="empty-state" id="emptyState">
+        <div class="empty-state__icon"></div>
+        <p class="empty-state__title" id="emptyTitle">No results found</p>
+        <p class="empty-state__text" id="emptyText">Try a different ingredient name</p>
+      </div>
+
+      <div class="suggestions" id="suggestions">
+        <p class="suggestions__title">Did you mean:</p>
+        <div class="suggestions__list" id="suggestionsList"></div>
+      </div>
+
+      <div class="stats" id="statsBar"></div>
+
+      <div class="results__header" id="resultsHeader" style="display:none">
+        <span class="results__count" id="resultsCount"></span>
+      </div>
+
+      <div class="results__grid" id="resultsGrid"></div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta">
+      <div class="cta__card">
+        <div class="cta__icon"></div>
+        <h2 class="cta__title">Scan Product Labels</h2>
+        <p class="cta__text">
+          Want to scan entire product labels with your camera?<br>
+          HalalLens uses AI-powered OCR to read and analyze all ingredients at once.
+        </p>
+        <a href="https://app.halallens.no" class="cta__link" target="_blank" rel="noopener">
+          Try HalalLens
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </a>
+      </div>
+    </section>
+
+    <!-- npm package -->
+    <section class="npm-section">
+      <div class="npm__card">
+        <p class="npm__label">For Developers</p>
+        <pre class="npm__code" id="npmCode"></pre>
+        <p class="npm__text" id="npmText"></p>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p class="footer__powered">
+        Powered by <a href="https://halallens.no" target="_blank" rel="noopener">HalalLens</a> — AI-powered halal food verification
+      </p>
+      <div class="footer__links" id="footerLinks"></div>
+    </footer>
+  </div>
+
+  <script>
+    // === SAFE DOM HELPERS ===
+    function el(tag, attrs, children) {
+      const node = document.createElement(tag);
+      if (attrs) {
+        Object.keys(attrs).forEach(function(key) {
+          if (key === 'textContent') node.textContent = attrs[key];
+          else if (key === 'className') node.className = attrs[key];
+          else if (key === 'onclick') node.addEventListener('click', attrs[key]);
+          else if (key === 'style') Object.assign(node.style, attrs[key]);
+          else node.setAttribute(key, attrs[key]);
+        });
+      }
+      if (children) {
+        children.forEach(function(child) {
+          if (typeof child === 'string') node.appendChild(document.createTextNode(child));
+          else if (child) node.appendChild(child);
+        });
+      }
+      return node;
+    }
+
+    function svgEl(markup) {
+      var tpl = document.createElement('template');
+      tpl.innerHTML = markup.trim();
+      return tpl.content.firstChild;
+    }
+
+    // === INIT STATIC CONTENT ===
+    (function initStaticContent() {
+      // Search hints
+      var hints = ['gelatin', 'E471', 'carmine', 'sugar', 'lecithin'];
+      var hintContainer = document.getElementById('searchHint');
+      hintContainer.appendChild(document.createTextNode('Try: '));
+      hints.forEach(function(term) {
+        var chip = el('span', {
+          textContent: term,
+          onclick: function() { quickSearch(term); }
+        });
+        hintContainer.appendChild(chip);
+        hintContainer.appendChild(document.createTextNode(' '));
+      });
+
+      // Empty state icon
+      document.querySelector('.empty-state__icon').textContent = '\uD83D\uDD0D';
+
+      // CTA icon
+      document.querySelector('.cta__icon').textContent = '\uD83D\uDCF7';
+
+      // npm code block
+      var codeEl = document.getElementById('npmCode');
+      var lines = [
+        {parts: [{cls:'kw',t:'import'}, {t:' '}, {cls:'op',t:'{'}, {t:' HalalScanner '}, {cls:'op',t:'}'}, {t:' '}, {cls:'kw',t:'from'}, {t:' '}, {cls:'str',t:"'@halallens/halal-scanner'"}, {cls:'op',t:';'}]},
+        {parts: []},
+        {parts: [{cls:'kw',t:'const'}, {t:' scanner '}, {cls:'op',t:'='}, {t:' '}, {cls:'kw',t:'new'}, {t:' '}, {cls:'fn',t:'HalalScanner'}, {cls:'op',t:'();'}]},
+        {parts: []},
+        {parts: [{cls:'cm',t:'// Search ingredients'}]},
+        {parts: [{cls:'kw',t:'const'}, {t:' results '}, {cls:'op',t:'='}, {t:' '}, {cls:'kw',t:'await'}, {t:' scanner.'}, {cls:'fn',t:'search'}, {cls:'op',t:'('}, {cls:'str',t:"'gelatin'"}, {cls:'op',t:');'}]},
+        {parts: []},
+        {parts: [{cls:'cm',t:'// Batch analyze'}]},
+        {parts: [{cls:'kw',t:'const'}, {t:' analysis '}, {cls:'op',t:'='}, {t:' '}, {cls:'kw',t:'await'}, {t:' scanner.'}, {cls:'fn',t:'analyze'}, {cls:'op',t:'(['}, {cls:'str',t:"'gelatin'"}, {cls:'op',t:','}, {t:' '}, {cls:'str',t:"'sugar'"}, {cls:'op',t:','}, {t:' '}, {cls:'str',t:"'E471'"}, {cls:'op',t:']);'}]},
+        {parts: [{t:'console.'}, {cls:'fn',t:'log'}, {cls:'op',t:'('}, {t:'analysis.halal_count'}, {cls:'op',t:','}, {t:' analysis.haram_count'}, {cls:'op',t:');'}]}
+      ];
+      lines.forEach(function(line, i) {
+        if (i > 0) codeEl.appendChild(document.createTextNode('\n'));
+        line.parts.forEach(function(part) {
+          if (part.cls) {
+            var span = document.createElement('span');
+            span.className = part.cls;
+            span.textContent = part.t;
+            codeEl.appendChild(span);
+          } else {
+            codeEl.appendChild(document.createTextNode(part.t));
+          }
+        });
+      });
+
+      // npm text
+      var npmTextEl = document.getElementById('npmText');
+      npmTextEl.appendChild(document.createTextNode('Install via npm: '));
+      var codeInline = document.createElement('code');
+      codeInline.textContent = 'npm install @halallens/halal-scanner';
+      npmTextEl.appendChild(codeInline);
+      npmTextEl.appendChild(document.createElement('br'));
+      npmTextEl.appendChild(document.createTextNode('Full docs on '));
+      var ghLink = el('a', {href: 'https://github.com/halallens-no/halal-scanner', target: '_blank', rel: 'noopener', textContent: 'GitHub'});
+      npmTextEl.appendChild(ghLink);
+      npmTextEl.appendChild(document.createTextNode(' \u00B7 '));
+      var npmLink = el('a', {href: 'https://www.npmjs.com/package/@halallens/halal-scanner', target: '_blank', rel: 'noopener', textContent: 'npm'});
+      npmTextEl.appendChild(npmLink);
+
+      // Footer links
+      var footerLinks = document.getElementById('footerLinks');
+      var links = [
+        {href: 'https://github.com/halallens-no/halal-scanner', text: 'GitHub'},
+        {href: 'https://halallens.no', text: 'Website'},
+        {href: 'https://app.halallens.no', text: 'Web App'},
+        {href: 'https://github.com/halallens-no/halal-scanner/blob/main/LICENSE', text: 'MIT License'}
+      ];
+      links.forEach(function(link) {
+        footerLinks.appendChild(el('a', {
+          href: link.href,
+          className: 'footer__link',
+          target: '_blank',
+          rel: 'noopener',
+          textContent: link.text
+        }));
+      });
+    })();
+
+    // === SEARCH LOGIC ===
+    var API_BASE = 'https://halallens.no/api/v1/public/ingredients';
+    var searchInput = document.getElementById('searchInput');
+    var searchBtn = document.getElementById('searchBtn');
+    var resultsGrid = document.getElementById('resultsGrid');
+    var loadingEl = document.getElementById('loading');
+    var emptyStateEl = document.getElementById('emptyState');
+    var emptyTitle = document.getElementById('emptyTitle');
+    var emptyText = document.getElementById('emptyText');
+    var suggestionsEl = document.getElementById('suggestions');
+    var suggestionsList = document.getElementById('suggestionsList');
+    var statsBar = document.getElementById('statsBar');
+    var resultsHeader = document.getElementById('resultsHeader');
+    var resultsCount = document.getElementById('resultsCount');
+
+    var debounceTimer = null;
+    var currentController = null;
+
+    var STATUS_ICONS = {
+      HALAL: '\u2713',
+      HARAM: '\u2717',
+      MUSHBOOH: '?',
+      UNKNOWN: '\u2014',
+      NOT_FOOD: '\u2014'
+    };
+
+    function statusClass(s) {
+      return (s || 'unknown').toLowerCase();
+    }
+
+    function hide() {
+      for (var i = 0; i < arguments.length; i++) arguments[i].classList.remove('visible');
+    }
+    function show() {
+      for (var i = 0; i < arguments.length; i++) arguments[i].classList.add('visible');
+    }
+
+    function quickSearch(term) {
+      searchInput.value = term;
+      doSearch(term);
+    }
+
+    function clearResults() {
+      while (resultsGrid.firstChild) resultsGrid.removeChild(resultsGrid.firstChild);
+      while (statsBar.firstChild) statsBar.removeChild(statsBar.firstChild);
+      while (suggestionsList.firstChild) suggestionsList.removeChild(suggestionsList.firstChild);
+      resultsHeader.style.display = 'none';
+      hide(loadingEl, emptyStateEl, suggestionsEl, statsBar);
+    }
+
+    function buildIngredientUrl(name) {
+      var slug = (name || '').toLowerCase().replace(/[\s,]+/g, '-').replace(/[^a-z0-9-]/g, '');
+      return 'https://halallens.no/en/ingredients/' + encodeURIComponent(slug);
+    }
+
+    function buildCard(item, index) {
+      var status = statusClass(item.halal_status);
+      var icon = STATUS_ICONS[item.halal_status] || STATUS_ICONS.UNKNOWN;
+
+      // Status ring
+      var ring = el('div', {className: 'card__status-ring card__status-ring--' + status, textContent: icon});
+
+      // Badge
+      var badge = el('span', {
+        className: 'card__badge card__badge--' + status,
+        textContent: item.display_status || item.halal_status || 'Unknown'
+      });
+
+      // Meta row
+      var metaChildren = [badge];
+      if (item.category) {
+        metaChildren.push(el('span', {className: 'card__category', textContent: item.category}));
+      }
+      if (item.status_verified) {
+        var checkSvg = svgEl('<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>');
+        var verified = el('span', {className: 'card__verified'}, [checkSvg, ' Verified']);
+        metaChildren.push(verified);
+      }
+      var meta = el('div', {className: 'card__meta'}, metaChildren);
+
+      // Body children
+      var bodyChildren = [
+        el('p', {className: 'card__name', textContent: item.name}),
+        meta
+      ];
+
+      // Explanation from AI review
+      var explanation = '';
+      if (item.ai_review && item.ai_review.opinions && item.ai_review.opinions.length > 0) {
+        explanation = item.ai_review.opinions[0].explanation || '';
+      }
+      if (explanation) {
+        bodyChildren.push(el('p', {className: 'card__explanation', textContent: explanation}));
+      }
+
+      var body = el('div', {className: 'card__body'}, bodyChildren);
+
+      // Arrow
+      var arrow = svgEl('<svg class="card__arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>');
+
+      // Card link
+      var card = el('a', {
+        className: 'card',
+        href: buildIngredientUrl(item.name),
+        target: '_blank',
+        rel: 'noopener',
+        style: { animationDelay: (index * 0.06) + 's' }
+      }, [ring, body, arrow]);
+
+      return card;
+    }
+
+    function buildStatPill(dotClass, label) {
+      var dot = el('span', {className: 'stats__dot ' + dotClass});
+      var pill = el('div', {className: 'stats__pill'}, [dot, label]);
+      return pill;
+    }
+
+    async function doSearch(query) {
+      query = (query || '').trim();
+      if (!query) { clearResults(); return; }
+
+      if (currentController) currentController.abort();
+      currentController = new AbortController();
+
+      clearResults();
+      show(loadingEl);
+
+      try {
+        var url = API_BASE + '?search=' + encodeURIComponent(query) + '&per_page=12';
+        var resp = await fetch(url, {
+          signal: currentController.signal,
+          headers: { 'Accept': 'application/json' }
+        });
+
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        var data = await resp.json();
+
+        hide(loadingEl);
+
+        // Fuzzy suggestions
+        if (data.fuzzy_suggestions && data.fuzzy_suggestions.length > 0 && data.items.length === 0) {
+          while (suggestionsList.firstChild) suggestionsList.removeChild(suggestionsList.firstChild);
+          data.fuzzy_suggestions.forEach(function(s) {
+            var chip = el('button', {
+              className: 'suggestions__chip',
+              textContent: s.name,
+              onclick: function() { quickSearch(s.name); }
+            });
+            suggestionsList.appendChild(chip);
+          });
+          show(suggestionsEl);
+        }
+
+        if (!data.items || data.items.length === 0) {
+          if (!data.fuzzy_suggestions || data.fuzzy_suggestions.length === 0) {
+            emptyTitle.textContent = 'No results found';
+            emptyText.textContent = 'No ingredients matching "' + query + '". Try a different name or E-number.';
+            show(emptyStateEl);
+          }
+          return;
+        }
+
+        // Stats
+        var counts = { halal: 0, haram: 0, mushbooh: 0, unknown: 0 };
+        data.items.forEach(function(item) {
+          var s = (item.halal_status || 'UNKNOWN').toUpperCase();
+          if (s === 'HALAL') counts.halal++;
+          else if (s === 'HARAM') counts.haram++;
+          else if (s === 'MUSHBOOH') counts.mushbooh++;
+          else counts.unknown++;
+        });
+
+        while (statsBar.firstChild) statsBar.removeChild(statsBar.firstChild);
+        if (counts.halal) statsBar.appendChild(buildStatPill('stats__dot--halal', counts.halal + ' Halal'));
+        if (counts.haram) statsBar.appendChild(buildStatPill('stats__dot--haram', counts.haram + ' Haram'));
+        if (counts.mushbooh) statsBar.appendChild(buildStatPill('stats__dot--mushbooh', counts.mushbooh + ' Mushbooh'));
+        if (counts.unknown) statsBar.appendChild(buildStatPill('stats__dot--unknown', counts.unknown + ' Unknown'));
+        show(statsBar);
+
+        // Results header
+        resultsCount.textContent = data.total + ' ingredient' + (data.total !== 1 ? 's' : '') + ' found';
+        resultsHeader.style.display = 'flex';
+
+        // Cards
+        data.items.forEach(function(item, i) {
+          resultsGrid.appendChild(buildCard(item, i));
+        });
+
+      } catch (err) {
+        hide(loadingEl);
+        if (err.name === 'AbortError') return;
+        emptyTitle.textContent = 'Connection error';
+        emptyText.textContent = 'Could not reach the HalalLens API. Please try again.';
+        show(emptyStateEl);
+      }
+    }
+
+    // Event listeners
+    searchBtn.addEventListener('click', function() { doSearch(searchInput.value); });
+
+    searchInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') { e.preventDefault(); doSearch(searchInput.value); }
+    });
+
+    searchInput.addEventListener('input', function() {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(function() {
+        if (searchInput.value.trim().length >= 2) doSearch(searchInput.value);
+        else if (searchInput.value.trim().length === 0) clearResults();
+      }, 400);
+    });
+
+    // Parallax on geometric shapes
+    document.addEventListener('mousemove', function(e) {
+      var cx = e.clientX / window.innerWidth - 0.5;
+      var cy = e.clientY / window.innerHeight - 0.5;
+      var shapes = document.querySelectorAll('.geo-shape');
+      shapes.forEach(function(shape, i) {
+        var factor = (i + 1) * 6;
+        var rotate = '';
+        if (shape.classList.contains('geo-shape--3')) rotate = ' rotate(45deg)';
+        if (shape.classList.contains('geo-shape--5')) rotate = ' rotate(30deg)';
+        shape.style.transform = 'translate(' + (cx * factor) + 'px, ' + (cy * factor) + 'px)' + rotate;
+      });
+    });
+
+    // Focus search on load
+    searchInput.focus();
+  </script>
+</body>
+</html>
